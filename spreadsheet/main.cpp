@@ -1,3 +1,4 @@
+#include <limits>
 #include "common.h"
 #include "formula.h"
 #include "test_runner_p.h"
@@ -24,9 +25,6 @@ inline std::ostream& operator<<(std::ostream& output, const CellInterface::Value
 }
 
 namespace {
-std::string ToString(FormulaError::Category category) {
-    return std::string(FormulaError(category).ToString());
-}
 
 void TestPositionAndStringConversion() {
     auto testSingle = [](Position pos, std::string_view str) {
@@ -250,7 +248,7 @@ void TestErrorDiv0() {
 void TestEmptyCellTreatedAsZero() {
     auto sheet = CreateSheet();
     sheet->SetCell("A1"_pos, "=B2");
-    ASSERT_EQUAL(sheet->GetCell("A1"_pos)->GetValue(), CellInterface::Value(0));
+    ASSERT_EQUAL(sheet->GetCell("A1"_pos)->GetValue(), CellInterface::Value(0.0));
 }
 
 void TestFormulaInvalidPosition() {
@@ -347,9 +345,53 @@ void TestCellCircularReferences() {
     ASSERT(caught);
     ASSERT_EQUAL(sheet->GetCell("M6"_pos)->GetText(), "Ready");
 }
+
+void AddTest1() {
+    auto sheet = CreateSheet();
+    sheet->SetCell({0,0}, "Hello");
+    std::cout << sheet->GetPrintableSize()  << std::endl;
+    sheet->SetCell({0,5}, "23");
+    std::cout << sheet->GetPrintableSize()  << std::endl;
+    sheet->ClearCell({0,5});
+    std::cout << sheet->GetPrintableSize()  << std::endl;
+}
+
+void AddTest2() {
+    auto sheet = CreateSheet();
+    sheet->SetCell({0,0}, "Hello");
+    sheet->SetCell({0,5}, "05");
+    sheet->SetCell({2,3}, "23");
+
+    sheet->ClearCell({0,0});
+    std::cout << sheet->GetPrintableSize()  << std::endl;
+    sheet->PrintTexts(std::cout);
+    sheet->PrintValues(std::cout);
+
+    sheet->ClearCell({0,5});
+    std::cout << sheet->GetPrintableSize()  << std::endl;
+    sheet->PrintTexts(std::cout);
+    sheet->PrintValues(std::cout);
+
+    sheet->ClearCell({2,3});
+    std::cout << sheet->GetPrintableSize()  << std::endl;
+    sheet->PrintTexts(std::cout);
+    sheet->PrintValues(std::cout);
+    }
+
+void AddTest3() {
+    auto sheet = CreateSheet();
+    sheet->SetCell({0,0}, "66");
+    sheet->SetCell({0,1}, "=A1+5");
+    sheet->SetCell({2,3}, "=B1+29");
+    sheet->PrintValues(std::cout);
+
+    sheet->ClearCell({0,0});
+    sheet->PrintValues(std::cout);
+    }
 }  // namespace
 
 int main() {
+
     TestRunner tr;
     RUN_TEST(tr, TestPositionAndStringConversion);
     RUN_TEST(tr, TestPositionToStringInvalid);
@@ -370,4 +412,9 @@ int main() {
     RUN_TEST(tr, TestCellReferences);
     RUN_TEST(tr, TestFormulaIncorrect);
     RUN_TEST(tr, TestCellCircularReferences);
+
+    AddTest1();
+    AddTest2();
+    AddTest3();
+    return 0;
 }

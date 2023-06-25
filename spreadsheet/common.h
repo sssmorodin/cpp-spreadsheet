@@ -26,6 +26,13 @@ struct Position {
     static const Position NONE;
 };
 
+struct PositionHasher {
+    std::size_t operator()(const Position& pos) const {
+        std::size_t hash = static_cast<std::size_t>(pos.row) << 16 | static_cast<std::size_t>(pos.col);
+        return hash;
+    }
+};
+
 struct Size {
     int rows = 0;
     int cols = 0;
